@@ -123,5 +123,16 @@ namespace SalesForceSync.Controllers
             _logger.LogInformation("Deleted contact {Id}", id);
             return Ok(new { message = $"Contact {id} deleted successfully" });
         }
+
+        [HttpGet("history")]
+        public async Task<IActionResult> GetSyncHistory()
+        {
+            var history = await _dbContext.SyncLogs
+                .OrderByDescending(s => s.StartedAt)
+                .Take(20)
+                .ToListAsync();
+
+            return Ok(history);
+        }
     }
 }

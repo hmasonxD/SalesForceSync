@@ -24,26 +24,58 @@ namespace SalesForceSync.Services
 
         public async Task<int> SyncContactsAsync()
         {
-            // Step 1: Authenticate with Salesforce
-            var authenticated = await _authService.AuthenticateAsync();
-            if (!authenticated)
+            var syncLog = new SyncLog
             {
-                Console.WriteLine("❌ Cannot sync - authentication failed");
-                return 0;
-            }
+                StartedAt = DateTime.UtcNow,
+                Status = "Running"
+            };
+            _dbContext.SyncLogs.Add(syncLog);
+            await _dbContext.SaveChangesAsync();
 
-            // Step 2: Fetch contacts from Salesforce
-            var contacts = await FetchContactsFromSalesforceAsync();
-            if (contacts == null || contacts.Count == 0)
+            try
             {
-                Console.WriteLine("No contacts found in Salesforce");
-                return 0;
-            }
+                // Step 1: Authenticate with Salesforce
+                var authenticated = await _authService.AuthenticateAsync();
+                if (!authenticated)
+                {
+                    syncLog.Status = "Failed";
+                    syncLog.ErrorMessage = "sales force authentication failed!";
+                    syncLog.CompletedAt = DateTime.UtcNow;
+                    await _dbContext.SaveChangesAsync();
+                    // Console.WriteLine("❌ Cannot sync - authentication failed");
+                    return 0;
+                }
 
-            // Step 3: Save contacts to database
-            var savedCount = await SaveContactsToDatabaseAsync(contacts);
-            Console.WriteLine($"✅ Synced {savedCount} contacts from Salesforce");
-            return savedCount;
+                // Step 2: Fetch contacts from Salesforce
+                var contacts = await FetchContactsFromSalesforceAsync();
+                if (contacts == null || contacts.Count == 0)
+                {
+                    syncLog.Status = "Success";
+                    syncLog.RecordsSynced = 0;
+                    syncLog.CompletedAt = DateTime.UtcNow;
+                    await _dbContext.SaveChangesAsync();
+                    // Console.WriteLine("No contacts found in Salesforce");
+                    return 0;
+                }
+
+                // Step 3: Save contacts to database
+                var savedCount = await SaveContactsToDatabaseAsync(contacts);
+                syncLog.Status = "Success";
+                syncLog.RecordsSynced = savedCount;
+                syncLog.CompletedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync();
+                Console.WriteLine($"✅ Synced {savedCount} contacts from Salesforce");
+                return savedCount;
+            }
+            catch (Exception ex)
+            {
+                syncLog.Status = "Failed";
+                syncLog.ErrorMessage = ex.Message;
+                syncLog.CompletedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync();
+                throw;
+            }
+            
         }
 
         private async Task<List<Contact>> FetchContactsFromSalesforceAsync()
