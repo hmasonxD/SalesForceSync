@@ -142,5 +142,46 @@ namespace SalesForceSync.Services
             await _dbContext.SaveChangesAsync();
             return contacts.Count;
         }
+        public async Task<string?> CreateContactInSalesforceAsync(Contact contact)
+        {
+            var authenticated = await _authService.AuthenticateAsync();
+            if (!authenticated)
+            {
+                Console.WriteLine("❌ Cannot create contact - authentication failed");
+                return null;
+            }
+
+            var url = $"{_authService.InstanceUrl}/services/data/v59.0/sobjects/Contact";
+
+            var contactData = new
+            {
+                FirstName = contact.FirstName,
+                LastName = contact.LastName,
+                Email = contact.Email,
+                Phone = contact.Phone
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(contactData);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _authService.AccessToken);
+
+            var response = await _httpClient.PostAsync(url, content);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonDoc = JsonDocument.Parse(responseString);
+                var salesforceId = jsonDoc.RootElement.GetProperty("id").GetString();
+                Console.WriteLine($"✅ Created contact in Salesforce with ID: {salesforceId}");
+                return salesforceId;
+            }
+            else
+            {
+                Console.WriteLine($"❌ Failed to create contact in Salesforce: {responseString}");
+                return null;
+            }
+        }
     }
 }

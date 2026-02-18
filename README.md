@@ -30,10 +30,22 @@ You can test all endpoints directly from the browser.
 
 ## API Endpoints
 
-| Method | Endpoint             | Description                                   |
-| ------ | -------------------- | --------------------------------------------- |
-| POST   | `/api/sync/contacts` | Triggers a sync of contacts from Salesforce   |
-| GET    | `/api/sync/contacts` | Returns all synced contacts from the database |
+| Method | Endpoint                    | Description                                       |
+| ------ | --------------------------- | ------------------------------------------------- |
+| POST   | `/api/sync/contacts`        | Triggers a sync of contacts from Salesforce       |
+| GET    | `/api/sync/contacts`        | Returns contacts with search & pagination         |
+| GET    | `/api/sync/contacts/{id}`   | Returns a single contact by ID                    |
+| POST   | `/api/sync/contacts/create` | Creates a contact in both Salesforce and local DB |
+| DELETE | `/api/sync/contacts/{id}`   | Deletes a contact from the local database         |
+| GET    | `/api/sync/history`         | Returns sync history logs                         |
+
+### Query Parameters for GET /api/sync/contacts
+
+| Parameter | Default | Description                                |
+| --------- | ------- | ------------------------------------------ |
+| search    | null    | Filter contacts by name, email, or company |
+| page      | 1       | Page number for pagination                 |
+| pageSize  | 10      | Number of results per page                 |
 
 ## Setup
 

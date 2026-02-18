@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using SalesForceSync.Services;
 using Microsoft.EntityFrameworkCore;
 using SalesForceSync.Data;
+using SalesForceSync.Models;
+
 
 namespace SalesForceSync.Controllers
 {
@@ -133,6 +135,42 @@ namespace SalesForceSync.Controllers
                 .ToListAsync();
 
             return Ok(history);
+        }
+        [HttpPost("contacts/create")]
+        public async Task<IActionResult> CreateContact([FromBody] Contact contact)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(contact.LastName))
+                    return BadRequest(new { success = false, message = "LastName is required" });
+
+                // Create in Salesforce first
+                var salesforceId = await _contactService.CreateContactInSalesforceAsync(contact);
+                if (salesforceId == null)
+                    return StatusCode(500, new { success = false, message = "Failed to create contact in Salesforce" });
+
+                // Save to local database
+                contact.SalesForceId = salesforceId;
+                contact.LastSyncedAt = DateTime.UtcNow;
+                _dbContext.Contacts.Add(contact);
+                await _dbContext.SaveChangesAsync();
+
+                _logger.LogInformation("Created contact {Name} in Salesforce and database", $"{contact.FirstName} {contact.LastName}");
+
+                return Created($"/api/sync/contacts/{contact.Id}", new
+                {
+                    success = true,
+                    message = "Contact created in both Salesforce and local database",
+                    salesforceId,
+                    localId = contact.Id,
+                    contact
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create contact");
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
     }
 }
