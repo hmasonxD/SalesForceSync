@@ -17,6 +17,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add Salesforce services
 builder.Services.AddHttpClient<SalesforceAuthService>();
 builder.Services.AddHttpClient<SalesforceContactService>();
+builder.Services.AddHostedService<SyncBackgroundService>();
+
 
 var app = builder.Build();
 
