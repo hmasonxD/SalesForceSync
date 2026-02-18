@@ -1,0 +1,38 @@
+## Ignore Visual Studio temporary files, build results, etc.
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio cache/options
+.vs/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Database files
+*.mdf
+*.ldf
+*.ndf
+
+# User-specific files (MonoDevelop/Xamarin Studio)
+*.userprefs
+
+# Auto generated files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+@SalesForceSync_HostAddress = http://localhost:5199
+
+GET {{SalesForceSync_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
