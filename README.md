@@ -103,6 +103,34 @@ SalesForceSync/
 └── appsettings.json              # App settings
 ```
 
+## Dashboard
+
+A built-in web dashboard is available at `/index.html` when running the application.
+
+Features:
+
+- View all synced contacts with search and pagination
+- Trigger manual sync from Salesforce
+- Create new contacts (syncs to both Salesforce and local DB)
+- Delete contacts
+- View sync history with status tracking
+- Real-time stats (total contacts, last sync time, syncs today)
+
+## Testing
+
+Run the unit tests:
+
+```bash
+cd SalesForceSync.Tests
+dotnet test
+```
+
+Tests cover:
+
+- GET contacts (returns all, search filtering, pagination)
+- GET single contact (valid ID, invalid ID returns 404)
+- DELETE contact (valid ID, invalid ID returns 404)
+
 ## How It Works
 
 1. **Authentication**: The app authenticates with Salesforce using OAuth 2.0 Client Credentials flow
