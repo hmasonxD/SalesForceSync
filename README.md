@@ -1,4 +1,4 @@
-# SalesForceSync POC
+# Salesforce Contact Sync Service
 
 A .NET Web API that synchronizes contacts from Salesforce into a local SQL Server database using the Salesforce REST API with OAuth 2.0 Client Credentials authentication.
 
@@ -137,3 +137,13 @@ Tests cover:
 2. **Fetch**: Queries the Salesforce REST API for all Contact records
 3. **Sync**: For each contact, checks if it already exists in the local database by Salesforce ID
 4. **Upsert**: Creates new contacts or updates existing ones to keep data in sync
+
+## What I Learned
+
+- **API Authentication**: Implementing OAuth 2.0 Client Credentials flow and handling token refresh
+- **Data Synchronization**: Designing upsert logic to handle creates, updates, and conflict resolution
+- **Database Design**: Structuring schemas for sync operations with proper indexing
+- **Error Handling**: Building retry logic and comprehensive logging for network failures
+- **Testing**: Writing unit tests for sync operations and API endpoints
+
+---
