@@ -75,12 +75,25 @@ namespace SalesForceSync.Services
                 await _dbContext.SaveChangesAsync();
                 throw;
             }
-            
+
         }
 
         private async Task<List<Contact>> FetchContactsFromSalesforceAsync()
         {
-            var query = "SELECT Id, FirstName, LastName, Email, Phone FROM Contact";
+            var lastSync = await _dbContext.SyncLogs
+            .Where(s => s.Status == "Success")
+            .OrderByDescending(s => s.CompletedAt)
+            .FirstOrDefaultAsync();
+            string query;
+            if (lastSync == null)
+            {
+                query = "SELECT Id, FirstName, LastName, Email, Phone FROM Contact";
+            }
+            else
+            {
+                var sinceDate = lastSync.CompletedAt!.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                query = $"SELECT Id, FirstName, LastName, Email, Phone FROM Contact WHERE LastModifiedDate > {sinceDate}";
+            }
             var url = $"{_authService.InstanceUrl}/services/data/v59.0/query?q={Uri.EscapeDataString(query)}";
 
             _httpClient.DefaultRequestHeaders.Authorization =
