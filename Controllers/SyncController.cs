@@ -172,6 +172,49 @@ namespace SalesForceSync.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+        [HttpPut("contacts/{id}")]
+        public async Task<IActionResult> UpdateContact(int id, [FromBody] Contact updatedContact)
+        {
+            try
+            {
+                var existing = await _dbContext.Contacts.FindAsync(id);
+                if (existing == null)
+                    return NotFound(new { message = $"Contact with ID {id} not found" });
+
+                if (string.IsNullOrWhiteSpace(existing.SalesForceId))
+                    return BadRequest(new { success = false, message = "Contact has no Salesforce ID" });
+
+                // Update the fields
+                existing.FirstName = updatedContact.FirstName;
+                existing.LastName = updatedContact.LastName;
+                existing.Email = updatedContact.Email;
+                existing.Phone = updatedContact.Phone;
+
+                // Push to Salesforce
+                var success = await _contactService.UpdateContactInSalesforceAsync(existing);
+                if (!success)
+                    return StatusCode(500, new { success = false, message = "Failed to update contact in Salesforce" });
+
+                // Save locally
+                existing.LastModifiedDate = DateTime.UtcNow;
+                existing.LastSyncedAt = DateTime.UtcNow;
+                await _dbContext.SaveChangesAsync();
+
+                _logger.LogInformation("Updated contact {Id} in Salesforce and database", id);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Contact updated in both Salesforce and local database",
+                    contact = existing
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update contact");
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
         [HttpGet("conflicts")]
         public async Task<IActionResult> GetConflictLogs()
         {

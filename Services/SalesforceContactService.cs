@@ -205,7 +205,7 @@ namespace SalesForceSync.Services
                 contact.Phone
             };
 
-            var json = System.Text.Json.JsonSerializer.Serialize(contactData);
+            var json = JsonSerializer.Serialize(contactData);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
             _httpClient.DefaultRequestHeaders.Authorization =
@@ -225,6 +225,45 @@ namespace SalesForceSync.Services
             {
                 Console.WriteLine($"❌ Failed to create contact in Salesforce: {responseString}");
                 return null;
+            }
+        }
+        public async Task<bool> UpdateContactInSalesforceAsync(Contact contact)
+        {
+            var authenticated = await _authService.AuthenticateAsync();
+            if (!authenticated)
+            {
+                Console.WriteLine("❌ Cannot update contact - authentication failed");
+                return false;
+            }
+
+            var url = $"{_authService.InstanceUrl}/services/data/v59.0/sobjects/Contact/{contact.SalesForceId}";
+
+            var contactData = new
+            {
+                contact.FirstName,
+                contact.LastName,
+                contact.Email,
+                contact.Phone
+            };
+
+            var json = JsonSerializer.Serialize(contactData);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _authService.AccessToken);
+
+            var response = await _httpClient.PatchAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"✅ Updated contact in Salesforce: {contact.SalesForceId}");
+                return true;
+            }
+            else
+            {
+                var responseString = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Failed to update contact in Salesforce: {responseString}");
+                return false;
             }
         }
     }
