@@ -754,20 +754,19 @@
         // Load stats
         async function loadStats() {
             try {
-                const res = await fetch(`${API}/api/sync/history`);
+                const res = await fetch(`${API}/api/sync/stats`);
                 const data = await res.json();
+                document.getElementById('totalContacts').textContent = data.totalContacts;
+                document.getElementById('syncsToday').textContent = data.syncsToday;
 
-                if (data.length > 0) {
-                    const latest = data[0];
-                    document.getElementById('lastSync').textContent = timeAgo(latest.completedAt || latest.startedAt);
-                    document.getElementById('syncStatus').textContent = latest.status;
+                if (data.lastSyncTime) {
+                    document.getElementById('lastSync').textContent = timeAgo(data.lastSyncTime);
+                }
+
+                if (data.lastSyncStatus) {
+                    document.getElementById('syncStatus').textContent = data.lastSyncStatus;
                     document.getElementById('syncStatus').className =
-                        `stat-value ${latest.status === 'Success' ? 'success' : 'danger'}`;
-
-                    const today = new Date().toDateString();
-                    const todaySyncs = data.filter(h =>
-                        new Date(h.startedAt).toDateString() === today).length;
-                    document.getElementById('syncsToday').textContent = todaySyncs;
+                        `stat-value ${data.lastSyncStatus === 'Success' ? 'success' : 'danger'}`;
                 }
             } catch (err) {}
         }

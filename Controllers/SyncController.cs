@@ -182,5 +182,27 @@ namespace SalesForceSync.Controllers
 
             return Ok(conflicts);
         }
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetSyncStats()
+        {
+            var today = DateTime.UtcNow.Date;
+            var syncsToday = await _dbContext.SyncLogs
+                .Where(s => s.StartedAt >= today)
+                .CountAsync();
+
+            var lastSync = await _dbContext.SyncLogs
+                .OrderByDescending(s => s.StartedAt)
+                .FirstOrDefaultAsync();
+
+            var totalContacts = await _dbContext.Contacts.CountAsync();
+
+            return Ok(new
+            {
+                syncsToday,
+                totalContacts,
+                lastSyncStatus = lastSync?.Status,
+                lastSyncTime = lastSync?.CompletedAt ?? lastSync?.StartedAt
+            });
+        }
     }
 }
