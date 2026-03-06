@@ -87,12 +87,12 @@ namespace SalesForceSync.Services
             string query;
             if (lastSync == null)
             {
-                query = "SELECT Id, FirstName, LastName, Email, Phone FROM Contact";
+                query = "SELECT Id, FirstName, LastName, Email, Phone, LastModifiedDate FROM Contact";
             }
             else
             {
                 var sinceDate = lastSync.CompletedAt!.Value.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                query = $"SELECT Id, FirstName, LastName, Email, Phone FROM Contact WHERE LastModifiedDate > {sinceDate}";
+                query = $"SELECT Id, FirstName, LastName, Email, Phone, LastModifiedDate FROM Contact WHERE LastModifiedDate > {sinceDate}";
             }
             var url = $"{_authService.InstanceUrl}/services/data/v59.0/query?q={Uri.EscapeDataString(query)}";
 
@@ -121,7 +121,8 @@ namespace SalesForceSync.Services
                     LastName = record.TryGetProperty("LastName", out var ln) ? ln.GetString() ?? "" : "",
                     Email = record.TryGetProperty("Email", out var em) ? em.GetString() ?? "" : "",
                     Phone = record.TryGetProperty("Phone", out var ph) ? ph.GetString() ?? "" : "",
-                    LastSyncedAt = DateTime.UtcNow
+                    LastSyncedAt = DateTime.UtcNow,
+                    LastModifiedDate = record.TryGetProperty("LastModifiedDate", out var lmd) ? DateTime.Parse(lmd.GetString() ?? "") : DateTime.UtcNow
                 });
             }
 
@@ -144,6 +145,7 @@ namespace SalesForceSync.Services
                     existing.Email = contact.Email;
                     existing.Phone = contact.Phone;
                     existing.LastSyncedAt = DateTime.UtcNow;
+                    existing.LastModifiedDate = contact.LastModifiedDate;
                 }
                 else
                 {
