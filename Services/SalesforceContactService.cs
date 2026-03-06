@@ -139,13 +139,42 @@ namespace SalesForceSync.Services
 
                 if (existing != null)
                 {
-                    // Update existing contact
-                    existing.FirstName = contact.FirstName;
-                    existing.LastName = contact.LastName;
-                    existing.Email = contact.Email;
-                    existing.Phone = contact.Phone;
+                    // Check if data actually changed
+                    bool hasConflict = existing.FirstName != contact.FirstName || existing.LastName != contact.LastName || existing.Email != contact.Email || existing.Phone != contact.Phone;
+                    if (hasConflict)
+                    {
+                        var conflict = new ConflictLog
+                        {
+                            ContactId = existing.Id,
+                            SalesForceId = contact.SalesForceId,
+                            OldFirstName = existing.FirstName,
+                            OldLastName = existing.LastName,
+                            OldEmail = existing.Email,
+                            OldPhone = existing.Phone,
+                            NewFirstName = contact.FirstName,
+                            NewLastName = contact.LastName,
+                            NewEmail = contact.Email,
+                            NewPhone = contact.Phone,
+                            LocalLastModifiedDate = existing.LastModifiedDate,
+                            SalesForceLastModifiedDate = contact.LastModifiedDate,
+                            ResolvedBy = contact.LastModifiedDate >= existing.LastModifiedDate ? "Salesforce" : "Local",
+                            DetectedAt = DateTime.UtcNow
+                        };
+                        await _dbContext.ConflictLogs.AddAsync(conflict);
+                        //Only overwrite if Salesforce is newer
+                        if (contact.LastModifiedDate >= existing.LastModifiedDate)
+                        {
+                            // Update existing contact
+                            existing.FirstName = contact.FirstName;
+                            existing.LastName = contact.LastName;
+                            existing.Email = contact.Email;
+                            existing.Phone = contact.Phone;
+                            existing.LastModifiedDate = contact.LastModifiedDate;
+
+                        }
+                    }
                     existing.LastSyncedAt = DateTime.UtcNow;
-                    existing.LastModifiedDate = contact.LastModifiedDate;
+
                 }
                 else
                 {
@@ -170,10 +199,10 @@ namespace SalesForceSync.Services
 
             var contactData = new
             {
-                FirstName = contact.FirstName,
-                LastName = contact.LastName,
-                Email = contact.Email,
-                Phone = contact.Phone
+                contact.FirstName,
+                contact.LastName,
+                contact.Email,
+                contact.Phone
             };
 
             var json = System.Text.Json.JsonSerializer.Serialize(contactData);

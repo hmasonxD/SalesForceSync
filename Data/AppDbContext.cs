@@ -11,5 +11,6 @@ namespace SalesForceSync.Data
         }
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<SyncLog> SyncLogs {get; set;}
+        public DbSet<ConflictLog> ConflictLogs {get; set;}
     }
 }

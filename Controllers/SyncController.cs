@@ -172,5 +172,15 @@ namespace SalesForceSync.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+        [HttpGet("conflicts")]
+        public async Task<IActionResult> GetConflictLogs()
+        {
+            var conflicts = await _dbContext.ConflictLogs
+                .OrderByDescending(c => c.DetectedAt)
+                .Take(20)
+                .ToListAsync();
+
+            return Ok(conflicts);
+        }
     }
 }
